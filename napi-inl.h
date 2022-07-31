@@ -433,10 +433,52 @@ inline Maybe<T> Just(const T& t) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Platform class
+////////////////////////////////////////////////////////////////////////////////
+#ifdef NAPI_EXPERIMENTAL
+
+Platform::Platform() : Platform(0, nullptr, 0, nullptr, 0) {}
+
+Platform::Platform(int argc,
+                 char** argv,
+                 int exec_argc,
+                 char** exec_argv,
+                 int thread_pool_size) {
+  napi_status r =
+      napi_create_platform(argc, argv, exec_argc, exec_argv, nullptr, thread_pool_size, &_platform);
+  NAPI_EMBEDDED_THROW_OR_ABORT(r);
+}
+
+Platform::~Platform() {
+  napi_destroy_platform(_platform);
+}
+
+inline Platform::operator napi_platform() const {
+  return _platform;
+};
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 // Env class
 ////////////////////////////////////////////////////////////////////////////////
 
 inline Env::Env(napi_env env) : _env(env) {}
+
+#ifdef NAPI_EXPERIMENTAL
+PlatformEnv::PlatformEnv(napi_platform platform)
+    : PlatformEnv(platform, nullptr) {}
+
+PlatformEnv::PlatformEnv(napi_platform platform, const char* main_script)
+    : Env(nullptr) {
+  napi_status r =
+      napi_create_environment(platform, nullptr, main_script, &_env);
+  NAPI_EMBEDDED_THROW_OR_ABORT(r);
+}
+
+PlatformEnv::~PlatformEnv() {
+  napi_destroy_environment(_env, nullptr);
+}
+#endif
 
 inline Env::operator napi_env() const {
   return _env;
@@ -2413,6 +2455,16 @@ inline void Promise::Deferred::Reject(napi_value value) const {
 }
 
 inline Promise::Promise(napi_env env, napi_value value) : Object(env, value) {}
+
+#ifdef NAPI_EXPERIMENTAL
+Value Promise::Await() {
+  EscapableHandleScope scope(_env);
+  napi_value result;
+  napi_status status = napi_await_promise(_env, _value, &result);
+  NAPI_THROW_IF_FAILED_VOID(_env, status);
+  return scope.Escape(result);
+}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Buffer<T> class

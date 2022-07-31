@@ -268,6 +268,40 @@ template <typename T>
 using MaybeOrValue = T;
 #endif
 
+#ifdef NAPI_EXPERIMENTAL
+
+#ifdef NAPI_CPP_EXCEPTIONS
+#define NAPI_EMBEDDED_THROW_OR_ABORT(status)                                   \
+  if (status != napi_ok) throw status
+#define NAPI_EMBEDDED_THROW_VALUE_OR_ABORT(condition, value)                   \
+  if (condition) throw value
+#else
+#define NAPI_EMBEDDED_THROW_OR_ABORT(status)                                   \
+  if (status != napi_ok) abort()
+#define NAPI_EMBEDDED_THROW_VALUE_OR_ABORT(condition, value)                   \
+  if (condition) abort()
+#endif
+
+/// Platform is a master class for instantiating the V8 engine
+/// by an embedder
+
+class Platform {
+ private:
+  napi_platform _platform;
+  std::vector<std::string> errors;
+
+ public:
+  explicit Platform();
+  explicit Platform(int argc,
+                          char** argv,
+                          int exec_argc,
+                          char** exec_argv,
+                          int thread_pool_size);
+  ~Platform();
+  operator napi_platform() const;
+};
+#endif
+
 /// Environment for Node-API values and operations.
 ///
 /// All Node-API values and operations must be associated with an environment.
@@ -295,6 +329,7 @@ class Env {
 #endif  // NAPI_VERSION > 5
  public:
   Env(napi_env env);
+  virtual ~Env() {};
 
   operator napi_env() const;
 
@@ -335,9 +370,9 @@ class Env {
   void SetInstanceData(DataType* data, HintType* hint) const;
 #endif  // NAPI_VERSION > 5
 
- private:
+ protected:
   napi_env _env;
-
+ private:
 #if NAPI_VERSION > 2
   template <typename Hook, typename Arg>
   class CleanupHook {
@@ -359,6 +394,16 @@ class Env {
   };
 };
 #endif  // NAPI_VERSION > 2
+
+#ifdef NAPI_EXPERIMENTAL
+class PlatformEnv : public Env {
+ public:
+  explicit PlatformEnv(napi_platform platform);
+  explicit PlatformEnv(napi_platform platform, const char* main_script);
+  virtual ~PlatformEnv();
+  NAPI_DISALLOW_ASSIGN_COPY(PlatformEnv);
+};
+#endif
 
 /// A JavaScript value of unknown type.
 ///
@@ -1428,6 +1473,9 @@ class Promise : public Object {
   };
 
   Promise(napi_env env, napi_value value);
+#ifdef NAPI_EXPERIMENTAL
+  Value Await();
+#endif
 };
 
 template <typename T>
