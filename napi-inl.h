@@ -450,7 +450,9 @@ Platform::Platform(int argc,
 }
 
 Platform::~Platform() {
-  napi_destroy_platform(_platform);
+  if (napi_destroy_platform(_platform) != napi_ok) {
+    abort();
+  }
 }
 
 inline Platform::operator napi_platform() const {
@@ -476,7 +478,13 @@ PlatformEnv::PlatformEnv(napi_platform platform, const char* main_script)
 }
 
 PlatformEnv::~PlatformEnv() {
-  napi_destroy_environment(_env, nullptr);
+  if (napi_destroy_environment(_env, nullptr) != napi_ok) {
+    abort();
+  }
+}
+
+void PlatformEnv::Run() {
+  NAPI_EMBEDDED_THROW_OR_ABORT(napi_run_environment(_env));
 }
 #endif
 

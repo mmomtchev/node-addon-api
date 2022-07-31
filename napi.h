@@ -401,6 +401,7 @@ class PlatformEnv : public Env {
   explicit PlatformEnv(napi_platform platform);
   explicit PlatformEnv(napi_platform platform, const char* main_script);
   virtual ~PlatformEnv();
+  void Run();
   NAPI_DISALLOW_ASSIGN_COPY(PlatformEnv);
 };
 #endif
