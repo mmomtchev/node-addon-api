@@ -2469,7 +2469,17 @@ Value Promise::Await() {
   EscapableHandleScope scope(_env);
   napi_value result;
   napi_status status = napi_await_promise(_env, _value, &result);
-  NAPI_THROW_IF_FAILED_VOID(_env, status);
+  if (status == napi_pending_exception) {
+#ifdef NAPI_CPP_EXCEPTIONS
+    bool is_error;
+    if (napi_is_error(_env, result, &is_error) == napi_ok && is_error)
+      throw Error(_env, result);
+    throw Value(_env, result);
+#else
+    return Value();
+#endif
+  }
+  NAPI_EMBEDDED_THROW_OR_ABORT(status);
   return scope.Escape(result);
 }
 #endif
