@@ -435,7 +435,7 @@ inline Maybe<T> Just(const T& t) {
 ////////////////////////////////////////////////////////////////////////////////
 // Platform class
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef NAPI_EXPERIMENTAL
+#ifdef NAPI_EMBEDDING
 
 Platform::Platform() : Platform(0, nullptr, 0, nullptr, 0) {}
 
@@ -466,7 +466,7 @@ inline Platform::operator napi_platform() const {
 
 inline Env::Env(napi_env env) : _env(env) {}
 
-#ifdef NAPI_EXPERIMENTAL
+#ifdef NAPI_EMBEDDING
 PlatformEnv::PlatformEnv(napi_platform platform)
     : PlatformEnv(platform, nullptr) {}
 
@@ -2464,7 +2464,7 @@ inline void Promise::Deferred::Reject(napi_value value) const {
 
 inline Promise::Promise(napi_env env, napi_value value) : Object(env, value) {}
 
-#ifdef NAPI_EXPERIMENTAL
+#ifdef NAPI_EMBEDDING
 Value Promise::Await() {
   EscapableHandleScope scope(_env);
   napi_value result;

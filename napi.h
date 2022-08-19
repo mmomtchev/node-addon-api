@@ -268,7 +268,7 @@ template <typename T>
 using MaybeOrValue = T;
 #endif
 
-#ifdef NAPI_EXPERIMENTAL
+#ifdef NAPI_EMBEDDING
 
 #ifdef NAPI_CPP_EXCEPTIONS
 #define NAPI_EMBEDDED_THROW_OR_ABORT(status)                                   \
@@ -395,7 +395,7 @@ class Env {
 };
 #endif  // NAPI_VERSION > 2
 
-#ifdef NAPI_EXPERIMENTAL
+#ifdef NAPI_EMBEDDING
 class PlatformEnv : public Env {
  public:
   explicit PlatformEnv(napi_platform platform);
@@ -1474,7 +1474,7 @@ class Promise : public Object {
   };
 
   Promise(napi_env env, napi_value value);
-#ifdef NAPI_EXPERIMENTAL
+#ifdef NAPI_EMBEDDING
   Value Await();
 #endif
 };
