@@ -11,6 +11,7 @@ jobs:
           - 16
         compiler:
           - gcc
+          - clang
         os:
           - ubuntu-18.04
           
@@ -40,8 +41,8 @@ jobs:
         fi
         export CFLAGS="$CFLAGS -O3 --coverage" LDFLAGS="$LDFLAGS --coverage"
         echo "CFLAGS=\"$CFLAGS\" LDFLAGS=\"$LDFLAGS\""
-        $CC $CFLAGS -o test/embedding -I. -I/usr/include/libnode test/embedding.cc -lnode
+        $CXX $CFLAGS -o test/embedding -I. -I/usr/include/libnode test/embedding.cc -lnode
         ./test/embedding
-        $CC $CFLAGS -o test/embedding_noexcept -DNAPI_DISABLE_CPP_EXCEPTIONS -I. -I/usr/include/libnode test/embedding.cc -lnode
+        $CXX $CFLAGS -o test/embedding_noexcept -DNAPI_DISABLE_CPP_EXCEPTIONS -I. -I/usr/include/libnode test/embedding.cc -lnode
         ./test/embedding_noexcept
         
