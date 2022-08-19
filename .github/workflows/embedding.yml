@@ -1,0 +1,51 @@
+name: libnode CI Unix Platform
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        node-version:
+          - 16
+        compiler:
+          - gcc
+          - clang
+        os:
+          - ubuntu-18.04
+          
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install system dependencies
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc" -a "${{ matrix.os }}" = ubuntu-* ]; then
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install g++-6.5
+        fi
+    - name: Use libnode ${{ matrix.node-version }}
+      run: |
+        sudo add-apt-repository ppa:mmomtchev/libnode
+        sudo apt update
+        sudo apt install -y libnode93 libnode-dev
+        
+    - name: Test
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          export CC="gcc" CXX="g++"
+        fi
+        if [ "${{ matrix.compiler }}" = "gcc" -a "${{ matrix.os }}" = ubuntu-* ]; then
+          export CC="gcc-6.5" CXX="g++-6.5" AR="gcc-ar-6.5" RANLIB="gcc-ranlib-6.5" NM="gcc-nm-6.5"
+        fi
+        if [ "${{ matrix.compiler }}" = "clang" ]; then
+          export CC="clang" CXX="clang++"
+        fi
+        export CFLAGS="$CFLAGS -O3 --coverage" LDFLAGS="$LDFLAGS --coverage"
+        echo "CFLAGS=\"$CFLAGS\" LDFLAGS=\"$LDFLAGS\""
+        $CC $CFLAGS -o embedding -I. -I/usr/include/libnode test/embedding.cc -lnode
+        ./embedding
+        $CC $CFLAGS -o embedding_noexcept -DNAPI_DISABLE_CPP_EXCEPTIONS -I. -I/usr/include/libnode test/embedding.cc -lnode
+        ./embedding_noexcept
+        
