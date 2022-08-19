@@ -28,6 +28,13 @@ void requirePkg(Napi::Env env, const char* pkg_name) {
   Napi::Function require = env.Global().Get("require").As<Napi::Function>();
   Napi::Value pkg_default = require({Napi::String::New(env, pkg_name)});
 
+#ifndef NAPI_CPP_EXCEPTIONS
+  if (env.IsExceptionPending()) {
+    Napi::Error e = env.GetAndClearPendingException();
+    throw e;
+  }
+#endif
+
   assert(pkg_default.IsString());
   assert(pkg_default.ToString().Utf8Value() == "original");
 }
@@ -47,13 +54,13 @@ int main() {
                 "Failed getting an exception for non-existing package\n");
         return -1;
       } catch (const Napi::Error& e) {
-        assert(strstr(e.what(), "Cannot find module") != nullptr);
+        assert(strstr(e.Message().c_str(), "Cannot find module") != nullptr);
       }
 
       importPkg(env, "./embedding.mjs");
 
     } catch (const Napi::Error& e) {
-      fprintf(stderr, "Caught a JS exception: %s\n", e.what());
+      fprintf(stderr, "Caught a JS exception: %s\n", e.Message().c_str());
       return -1;
     }
   } catch (napi_status r) {
