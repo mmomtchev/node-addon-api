@@ -36,9 +36,6 @@ jobs:
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           export CC="gcc" CXX="g++"
         fi
-        if [ "${{ matrix.compiler }}" = "gcc" -a "${{ matrix.os }}" = ubuntu-* ]; then
-          export CC="gcc-6.5" CXX="g++-6.5" AR="gcc-ar-6.5" RANLIB="gcc-ranlib-6.5" NM="gcc-nm-6.5"
-        fi
         if [ "${{ matrix.compiler }}" = "clang" ]; then
           export CC="clang" CXX="clang++"
         fi
