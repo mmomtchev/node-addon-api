@@ -442,6 +442,60 @@ inline Maybe<T> Just(const T& t) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Platform class
+////////////////////////////////////////////////////////////////////////////////
+#ifdef NAPI_EMBEDDING
+
+Platform::Platform() : Platform(0, nullptr, 0, nullptr, 0) {}
+
+Platform::Platform(int argc,
+                 char** argv,
+                 int exec_argc,
+                 char** exec_argv,
+                 int thread_pool_size) {
+  napi_status r =
+      napi_create_platform(argc, argv, exec_argc, exec_argv, nullptr, thread_pool_size, &_platform);
+  NAPI_EMBEDDED_THROW_OR_ABORT(r);
+}
+
+Platform::~Platform() {
+  if (napi_destroy_platform(_platform) != napi_ok) {
+    abort();
+  }
+}
+
+inline Platform::operator napi_platform() const {
+  return _platform;
+};
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+// PlatformEnv class
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef NAPI_EMBEDDING
+PlatformEnv::PlatformEnv(napi_platform platform)
+    : PlatformEnv(platform, nullptr) {}
+
+PlatformEnv::PlatformEnv(napi_platform platform, const char* main_script)
+    : Env(nullptr) {
+  napi_status r =
+      napi_create_environment(platform, nullptr, main_script, &_env);
+  NAPI_EMBEDDED_THROW_OR_ABORT(r);
+}
+
+PlatformEnv::~PlatformEnv() {
+  if (napi_destroy_environment(_env, nullptr) != napi_ok) {
+    abort();
+  }
+}
+
+void PlatformEnv::Run() {
+  NAPI_EMBEDDED_THROW_OR_ABORT(napi_run_environment(_env));
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 // Env class
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -2611,6 +2665,26 @@ inline void Promise::CheckCast(napi_env env, napi_value value) {
 }
 
 inline Promise::Promise(napi_env env, napi_value value) : Object(env, value) {}
+
+#ifdef NAPI_EMBEDDING
+Value Promise::Await() {
+  EscapableHandleScope scope(_env);
+  napi_value result;
+  napi_status status = napi_await_promise(_env, _value, &result);
+  if (status == napi_pending_exception) {
+#ifdef NAPI_CPP_EXCEPTIONS
+    bool is_error;
+    if (napi_is_error(_env, result, &is_error) == napi_ok && is_error)
+      throw Error(_env, result);
+    throw Value(_env, result);
+#else
+    return Value();
+#endif
+  }
+  NAPI_EMBEDDED_THROW_OR_ABORT(status);
+  return scope.Escape(result);
+}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Buffer<T> class
