@@ -144,6 +144,7 @@ The following is the documentation for node-addon-api.
     - [ThreadSafeFunction](doc/threadsafe_function.md)
     - [TypedThreadSafeFunction](doc/typed_threadsafe_function.md)
  - [Promises](doc/promises.md)
+ - [Embedding](doc/embedding.md)
  - [Version management](doc/version_management.md)
 
 <a name="examples"></a>
