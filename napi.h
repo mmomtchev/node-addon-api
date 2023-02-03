@@ -328,7 +328,6 @@ class Platform {
 /// corresponds to an Isolate.
 class Env {
  private:
-  napi_env _env;
 #if NAPI_VERSION > 5
   template <typename T>
   static void DefaultFini(Env, T* data);
@@ -382,7 +381,7 @@ class Env {
 
   protected:
     napi_env _env;
-  private:
+  public:
 
 #if NAPI_VERSION > 2
   template <typename Hook, typename Arg>
